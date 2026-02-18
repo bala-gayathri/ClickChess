@@ -1,0 +1,8 @@
+
+{
+  "name": "ClickChess",
+  "description": "Scan chess scoresheets, edit moves, and export to PGN for sharing via WhatsApp.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
