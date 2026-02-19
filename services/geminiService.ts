@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { ChessMove, GameMetadata } from "../types";
 
@@ -8,7 +7,13 @@ export interface ScanResult {
 }
 
 export const parseScoresheet = async (base64Image: string): Promise<ScanResult> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const apiKey = import.meta.env.VITE_API_KEY;
+  
+  if (!apiKey || apiKey === "undefined" || apiKey === "") {
+    throw new Error("VITE_API_KEY is missing. Please add it to your Environment Variables.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -22,13 +27,13 @@ export const parseScoresheet = async (base64Image: string): Promise<ScanResult> 
             },
           },
           {
-            text: "Chess OCR: Extract White, Black, and algebraic moves into JSON. Standard notation only.",
+            text: "Chess OCR: Extract White, Black, and algebraic moves into JSON. Standard notation only. If move is unclear, use standard '?' or leave empty.",
           },
         ],
       },
     ],
     config: {
-      thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for faster direct response
+      thinkingConfig: { thinkingBudget: 0 },
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -60,17 +65,17 @@ export const parseScoresheet = async (base64Image: string): Promise<ScanResult> 
     },
   });
 
-  try {
-    const text = response.text || '{"metadata": {}, "moves": []}';
-    const parsed = JSON.parse(text);
-    const cleanedMoves = (parsed.moves || []).map((m: any) => ({
-      moveNumber: m.moveNumber || 0,
-      white: m.white || '',
-      black: m.black || ''
-    }));
-    return { ...parsed, moves: cleanedMoves };
-  } catch (error) {
-    console.error("Failed to parse Gemini response", error);
-    return { metadata: {}, moves: [] };
-  }
+  const text = response.text || '{"metadata": {}, "moves": []}';
+  const parsed = JSON.parse(text);
+  
+  const cleanedMoves = (parsed.moves || []).map((m: any) => ({
+    moveNumber: m.moveNumber || 0,
+    white: m.white || '',
+    black: m.black || ''
+  }));
+
+  return { 
+    metadata: parsed.metadata || {}, 
+    moves: cleanedMoves 
+  };
 };
