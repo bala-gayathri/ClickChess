@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { GoogleGenAI, Type } from "@google/genai";
 import { ChessMove, GameMetadata } from "../types";
 
